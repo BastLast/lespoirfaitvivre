@@ -6,7 +6,7 @@ Site de statistiques interactif basé sur les résultats officiels du Loto fran�
 
 - **989+ tirages** analysés automatiquement
 - **Mise à jour automatique** des données depuis l'API FDJ à chaque visite
-- **9 onglets** d'analyse :
+- **10 onglets** d'analyse :
   - Fréquences de sortie (avec filtres par période)
   - Retards actuels et historiques
   - Statistiques du N° Chance
@@ -16,10 +16,11 @@ Site de statistiques interactif basé sur les résultats officiels du Loto fran�
   - Répartition (dizaines, parité, somme, écart)
   - Suggestions de grilles (froids, glacés, mix équilibré)
   - Rétroanalyse des suggestions (validation historique)
+  - Analyseur de combinaison personnalisée
 
 ## Architecture
 
-```
+```text
 ├── index.html              # Structure HTML
 ├── css/style.css           # Styles
 ├── data/loto_data.json     # Données fallback
@@ -39,7 +40,8 @@ Site de statistiques interactif basé sur les résultats officiels du Loto fran�
 │       ├── evolution.js    # Onglet évolution temporelle
 │       ├── repartition.js  # Onglet répartition
 │       ├── suggestions.js  # Onglet suggestions
-│       └── retroanalysis.js# Onglet rétroanalyse
+│       ├── retroanalysis.js# Onglet rétroanalyse
+│       └── analyzer.js     # Onglet analyseur de combinaison
 ```
 
 ## Déploiement

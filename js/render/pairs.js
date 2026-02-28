@@ -26,6 +26,7 @@ function computeRetard(draws, size) {
 }
 
 export function renderPairs() {
+    if (!filteredDraws.length) return;
     const pairs = computePairs(filteredDraws);
     const triplets = computeTriplets(filteredDraws);
     const pairsRetard = computeRetard(filteredDraws, 2);
@@ -184,7 +185,6 @@ export function renderPairs() {
             responsive: true,
             plugins: {
                 legend: { display: false },
-                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         afterLabel: (ctx) => `${(ctx.raw / totalDraws * 100).toFixed(1)}% des tirages`
@@ -213,7 +213,6 @@ export function renderPairs() {
         options: {
             responsive: true,
             plugins: {
-                legend: { display: false },
                 legend: { display: false },
                 tooltip: {
                     callbacks: {

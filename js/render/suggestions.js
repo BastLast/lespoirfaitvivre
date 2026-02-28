@@ -12,6 +12,7 @@ function shuffle(arr) {
 }
 
 export function renderSuggestions() {
+    if (!filteredDraws.length) return;
     const freq = computeFrequencies(filteredDraws);
     const retards = computeRetards(filteredDraws);
     const chanceRetards = computeChanceRetards(filteredDraws);

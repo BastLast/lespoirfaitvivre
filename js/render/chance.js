@@ -3,6 +3,7 @@ import { computeChanceFreq, computeChanceRetards } from '../stats.js';
 import { makeChart } from '../charts.js';
 
 export function renderChance() {
+    if (!filteredDraws.length) return;
     const chanceFreq = computeChanceFreq(filteredDraws);
     const chanceRetards = computeChanceRetards(filteredDraws);
 
@@ -48,7 +49,7 @@ export function renderChance() {
                 legend: { position: 'right', labels: { color: '#9ca3af' } },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => `${ctx.label}: ${ctx.parsed} (${((ctx.parsed / filteredDraws.length) * 100).toFixed(1)}%)`
+                        label: (ctx) => `${ctx.label}: ${ctx.parsed} (${((ctx.parsed / (filteredDraws.length || 1)) * 100).toFixed(1)}%)`
                     }
                 }
             }

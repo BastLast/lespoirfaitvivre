@@ -1,4 +1,7 @@
 // Shared application state
+// Note: ES Module live bindings are used intentionally here.
+// Mutations happen only through the setter functions below.
+// Do NOT reassign these exports directly from other modules.
 export let allDraws = [];
 export let filteredDraws = [];
 export const charts = {};

@@ -3,6 +3,7 @@ import { computeRetards, computeMaxRetards } from '../stats.js';
 import { makeChart } from '../charts.js';
 
 export function renderRetards() {
+    if (!filteredDraws.length) return;
     const retards = computeRetards(filteredDraws);
     const maxRetards = computeMaxRetards(filteredDraws);
 

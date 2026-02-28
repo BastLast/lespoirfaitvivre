@@ -3,8 +3,10 @@ import { computePairs } from '../stats.js';
 import { heatColor } from '../charts.js';
 
 export function renderHeatmap() {
+    if (!filteredDraws.length) return;
     const pairs = computePairs(filteredDraws);
-    const maxPairVal = Math.max(...Object.values(pairs));
+    const pairValues = Object.values(pairs);
+    const maxPairVal = pairValues.length > 0 ? Math.max(...pairValues) : 1;
 
     let html = '<table class="heatmap-table"><tr><th></th>';
     for (let i = 1; i <= 49; i++) html += `<th>${i}</th>`;

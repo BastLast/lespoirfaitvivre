@@ -3,25 +3,56 @@ import { allDraws, filteredDraws, charts, setAllDraws, setFilteredDraws, FDJ_ZIP
 export function parseCSV(csvText) {
     const lines = csvText.split('\n').filter(l => l.trim());
     if (lines.length < 2) return [];
+
+    // Dynamic header detection instead of hardcoded column indices
+    const headerCols = lines[0].split(';').map(h => h.trim().toLowerCase());
+    const colIndex = {
+        id: headerCols.indexOf('annee_numero_de_tirage'),
+        day: headerCols.indexOf('jour_de_tirage'),
+        date: headerCols.indexOf('date_de_tirage'),
+        boule1: headerCols.indexOf('boule_1'),
+        boule2: headerCols.indexOf('boule_2'),
+        boule3: headerCols.indexOf('boule_3'),
+        boule4: headerCols.indexOf('boule_4'),
+        boule5: headerCols.indexOf('boule_5'),
+        chance: headerCols.indexOf('numero_chance'),
+    };
+
+    // Validate that all required columns were found
+    const missingCols = Object.entries(colIndex).filter(([, idx]) => idx === -1).map(([name]) => name);
+    if (missingCols.length > 0) {
+        console.warn(`CSV parsing: colonnes manquantes: ${missingCols.join(', ')}. Headers trouvés: ${headerCols.join(', ')}`);
+        return [];
+    }
+
+    const minCols = Math.max(...Object.values(colIndex)) + 1;
     const draws = [];
+    let skippedCount = 0;
     for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(';');
-        if (cols.length < 10) continue;
+        if (cols.length < minCols) { skippedCount++; continue; }
         try {
-            const id = cols[0].trim();
-            const day = cols[1].trim();
-            const date = cols[2].trim();
+            const id = cols[colIndex.id].trim();
+            const day = cols[colIndex.day].trim();
+            const date = cols[colIndex.date].trim();
             const balls = [
-                parseInt(cols[4].trim()),
-                parseInt(cols[5].trim()),
-                parseInt(cols[6].trim()),
-                parseInt(cols[7].trim()),
-                parseInt(cols[8].trim()),
+                parseInt(cols[colIndex.boule1].trim()),
+                parseInt(cols[colIndex.boule2].trim()),
+                parseInt(cols[colIndex.boule3].trim()),
+                parseInt(cols[colIndex.boule4].trim()),
+                parseInt(cols[colIndex.boule5].trim()),
             ].sort((a, b) => a - b);
-            const chance = parseInt(cols[9].trim());
-            if (balls.some(isNaN) || isNaN(chance)) continue;
+            const chance = parseInt(cols[colIndex.chance].trim());
+            if (balls.some(isNaN) || isNaN(chance)) { skippedCount++; continue; }
             draws.push({ id, day, date, balls, chance });
-        } catch (e) { continue; }
+        } catch (e) {
+            skippedCount++;
+            console.warn(`CSV parsing: ligne ${i} ignorée:`, e.message);
+            continue;
+        }
+    }
+    if (skippedCount > 0) {
+        console.warn(`CSV parsing: ${skippedCount} ligne(s) ignorée(s) sur ${lines.length - 1}`);
     }
     draws.sort((a, b) => {
         const [ad, am, ay] = a.date.split('/');
@@ -39,6 +70,14 @@ export function showStatus(msg) {
 export async function loadData(initCallback) {
     showStatus('Chargement des données...');
 
+    // Guard against multiple initCallback invocations (P0 fix)
+    let initialized = false;
+    function safeInit() {
+        if (initialized) return;
+        initialized = true;
+        initCallback();
+    }
+
     // 1) Try cache first
     const cachedTs = localStorage.getItem(CACHE_TS_KEY);
     const cached = localStorage.getItem(CACHE_KEY);
@@ -48,9 +87,11 @@ export async function loadData(initCallback) {
         try {
             setAllDraws(JSON.parse(cached));
             setFilteredDraws([...allDraws]);
-            initCallback();
+            safeInit();
             showStatus(`${allDraws.length} tirages (cache). Vérification des mises à jour...`);
-        } catch (e) { /* cache corrupted, continue */ }
+        } catch (e) {
+            console.warn('Cache corrompu, ignoré:', e.message);
+        }
     }
 
     // 2) Try to load from bundled JSON as fallback
@@ -60,10 +101,12 @@ export async function loadData(initCallback) {
             if (resp.ok) {
                 setAllDraws(await resp.json());
                 setFilteredDraws([...allDraws]);
-                initCallback();
+                safeInit();
                 showStatus(`${allDraws.length} tirages chargés (fichier local). Mise à jour en cours...`);
             }
-        } catch (e) { /* no local file, continue */ }
+        } catch (e) {
+            console.warn('Chargement JSON local échoué:', e.message);
+        }
     }
 
     // 3) Try to fetch fresh data from FDJ
@@ -93,9 +136,19 @@ export async function loadData(initCallback) {
                 try {
                     localStorage.setItem(CACHE_KEY, JSON.stringify(allDraws));
                     localStorage.setItem(CACHE_TS_KEY, Date.now().toString());
-                } catch (e) { /* localStorage full */ }
+                } catch (e) {
+                    console.warn('Impossible de mettre en cache (localStorage plein):', e.message);
+                }
 
-                initCallback();
+                // After FDJ refresh, re-render (but don't re-attach listeners)
+                if (initialized) {
+                    // Data updated after init: just re-render active tab
+                    const { renderActiveTab, updateSummaryStats } = await import('./render/summary.js');
+                    updateSummaryStats();
+                    renderActiveTab();
+                } else {
+                    safeInit();
+                }
                 const diff = allDraws.length - oldCount;
                 if (diff > 0 && oldCount > 0) {
                     showStatus(`✅ Mis à jour ! ${allDraws.length} tirages (+${diff} nouveaux)`);

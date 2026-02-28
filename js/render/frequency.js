@@ -4,6 +4,7 @@ import { freqColor } from '../charts.js';
 import { makeChart } from '../charts.js';
 
 export function renderFrequency() {
+    if (!filteredDraws.length) return;
     const freq = computeFrequencies(filteredDraws);
     const sortType = document.getElementById('filterSort').value;
 
@@ -23,6 +24,7 @@ export function renderFrequency() {
 
     const minV = Math.min(...values);
     const maxV = Math.max(...values);
+    const drawCount = filteredDraws.length || 1;
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
 
     makeChart('chartFreq', {
@@ -43,7 +45,7 @@ export function renderFrequency() {
                 tooltip: {
                     callbacks: {
                         afterLabel: (ctx) => {
-                            const pct = ((ctx.parsed.y / filteredDraws.length) * 100).toFixed(1);
+                            const pct = ((ctx.parsed.y / drawCount) * 100).toFixed(1);
                             return `${pct}% des tirages\nMoyenne: ${avg.toFixed(1)}`;
                         }
                     }
@@ -73,7 +75,7 @@ export function renderFrequency() {
         cell.style.background = freqColor(count, minV, maxV);
         cell.style.color = 'white';
         cell.innerHTML = `${num}<span class="count">${count}×</span>`;
-        cell.title = `Boule ${num}: ${count} sorties (${((count / filteredDraws.length) * 100).toFixed(1)}%)`;
+        cell.title = `Boule ${num}: ${count} sorties (${((count / drawCount) * 100).toFixed(1)}%)`;
         grid.appendChild(cell);
     });
 }

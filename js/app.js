@@ -1,6 +1,6 @@
 import { allDraws, filteredDraws, retroDone, setFilteredDraws } from './state.js';
 import { loadData } from './data.js';
-import { renderAll, renderLastDraw } from './render/summary.js';
+import { renderAll, renderLastDraw, renderTabIfDirty } from './render/summary.js';
 import { renderFrequency } from './render/frequency.js';
 import { renderEvolution } from './render/evolution.js';
 import { runRetroAnalysis } from './render/retroanalysis.js';
@@ -21,6 +21,10 @@ function init() {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
             document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+
+            // Lazy render: only render this tab if it's dirty
+            renderTabIfDirty(btn.dataset.tab);
+
             if (btn.dataset.tab === 'retroanalyse' && !retroDone) {
                 setTimeout(() => runRetroAnalysis(), 50);
             }

@@ -2,6 +2,7 @@ import { filteredDraws } from '../state.js';
 import { makeChart } from '../charts.js';
 
 export function renderRepartition() {
+    if (!filteredDraws.length) return;
     // By decade
     const decades = { '1-9': 0, '10-19': 0, '20-29': 0, '30-39': 0, '40-49': 0 };
     filteredDraws.forEach(d => {

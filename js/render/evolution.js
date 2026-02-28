@@ -2,6 +2,7 @@ import { filteredDraws } from '../state.js';
 import { makeChart } from '../charts.js';
 
 export function renderEvolution() {
+    if (!filteredDraws.length) return;
     const num = parseInt(document.getElementById('evoNumber').value) || 1;
 
     const cumFreq = [];

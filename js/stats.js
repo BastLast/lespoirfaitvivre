@@ -1,3 +1,32 @@
+/**
+ * Unified single-pass computation over draws.
+ * Returns { freq, chanceFreq, retards, chanceRetards } in O(N).
+ */
+export function computeAllStats(draws) {
+    const freq = {};
+    for (let i = 1; i <= 49; i++) freq[i] = 0;
+    const chanceFreq = {};
+    for (let i = 1; i <= 10; i++) chanceFreq[i] = 0;
+    const lastSeen = {};
+    for (let i = 1; i <= 49; i++) lastSeen[i] = -1;
+    const lastSeenCh = {};
+    for (let i = 1; i <= 10; i++) lastSeenCh[i] = -1;
+
+    draws.forEach((d, idx) => {
+        d.balls.forEach(b => { freq[b]++; lastSeen[b] = idx; });
+        chanceFreq[d.chance]++;
+        lastSeenCh[d.chance] = idx;
+    });
+
+    const len = draws.length;
+    const retards = {};
+    for (let i = 1; i <= 49; i++) retards[i] = lastSeen[i] === -1 ? len : (len - 1 - lastSeen[i]);
+    const chanceRetards = {};
+    for (let i = 1; i <= 10; i++) chanceRetards[i] = lastSeenCh[i] === -1 ? len : (len - 1 - lastSeenCh[i]);
+
+    return { freq, chanceFreq, retards, chanceRetards };
+}
+
 export function computeFrequencies(draws) {
     const freq = {};
     for (let i = 1; i <= 49; i++) freq[i] = 0;
@@ -14,10 +43,11 @@ export function computeChanceFreq(draws) {
 
 export function computeRetards(draws) {
     const ret = {};
-    for (let i = 1; i <= 49; i++) ret[i] = draws.length;
-    for (let idx = draws.length - 1; idx >= 0; idx--) {
+    const len = draws.length;
+    for (let i = 1; i <= 49; i++) ret[i] = len;
+    for (let idx = len - 1; idx >= 0; idx--) {
         draws[idx].balls.forEach(b => {
-            const r = draws.length - 1 - idx;
+            const r = len - 1 - idx;
             if (r < ret[b]) ret[b] = r;
         });
     }
@@ -26,9 +56,10 @@ export function computeRetards(draws) {
 
 export function computeChanceRetards(draws) {
     const ret = {};
-    for (let i = 1; i <= 10; i++) ret[i] = draws.length;
-    for (let idx = draws.length - 1; idx >= 0; idx--) {
-        const r = draws.length - 1 - idx;
+    const len = draws.length;
+    for (let i = 1; i <= 10; i++) ret[i] = len;
+    for (let idx = len - 1; idx >= 0; idx--) {
+        const r = len - 1 - idx;
         if (r < ret[draws[idx].chance]) ret[draws[idx].chance] = r;
     }
     return ret;

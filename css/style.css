@@ -33,6 +33,7 @@ header h1 {
     font-size: 2rem;
     background: linear-gradient(90deg, #60a5fa, #a78bfa);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -409,6 +410,7 @@ nav.tabs button.active {
 }
 .ana-balls-inputs input[type=number] {
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 @media (max-width: 768px) {
