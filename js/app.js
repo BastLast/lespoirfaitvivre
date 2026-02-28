@@ -4,6 +4,7 @@ import { renderAll, renderLastDraw } from './render/summary.js';
 import { renderFrequency } from './render/frequency.js';
 import { renderEvolution } from './render/evolution.js';
 import { runRetroAnalysis } from './render/retroanalysis.js';
+import { initAnalyzer } from './render/analyzer.js';
 
 function init() {
     document.getElementById('totalDraws').textContent = allDraws.length;
@@ -22,6 +23,9 @@ function init() {
             document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
             if (btn.dataset.tab === 'retroanalyse' && !retroDone) {
                 setTimeout(() => runRetroAnalysis(), 50);
+            }
+            if (btn.dataset.tab === 'analyzer') {
+                initAnalyzer();
             }
         });
     });

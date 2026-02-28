@@ -59,6 +59,7 @@
             <button data-tab="repartition">Répartition</button>
             <button data-tab="suggestions">Suggestions</button>
             <button data-tab="retroanalyse">Rétroanalyse</button>
+            <button data-tab="analyzer">Analyseur</button>
         </nav>
 
         <!-- TAB: Fréquences -->
@@ -279,6 +280,33 @@
                     <div id="retroBestTable"></div>
                 </div>
             </div>
+        </div>
+        <!-- TAB: Analyseur -->
+        <div class="tab-content" id="tab-analyzer">
+            <div class="chart-container">
+                <h3>🔍 Analyseur de combinaison personnalisée</h3>
+                <p class="info-text">Entrez vos 5 numéros (1-49) et votre N° Chance (1-10), puis cliquez sur Analyser pour obtenir une analyse complète de votre grille.</p>
+                <div class="ana-input-row">
+                    <div class="ana-input-group">
+                        <label>Boules</label>
+                        <div class="ana-balls-inputs">
+                            <input type="number" id="anaBall1" min="1" max="49" placeholder="1">
+                            <input type="number" id="anaBall2" min="1" max="49" placeholder="2">
+                            <input type="number" id="anaBall3" min="1" max="49" placeholder="3">
+                            <input type="number" id="anaBall4" min="1" max="49" placeholder="4">
+                            <input type="number" id="anaBall5" min="1" max="49" placeholder="5">
+                        </div>
+                    </div>
+                    <div class="ana-input-group">
+                        <label>Chance</label>
+                        <div class="ana-balls-inputs">
+                            <input type="number" id="anaChance" min="1" max="10" placeholder="1" class="chance-input">
+                        </div>
+                    </div>
+                    <button id="analyzerBtn" class="ana-btn">🔍 Analyser</button>
+                </div>
+            </div>
+            <div id="analyzerResults" style="display:none"></div>
         </div>
     </div>
 

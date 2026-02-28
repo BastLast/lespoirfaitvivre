@@ -328,6 +328,95 @@ nav.tabs button.active {
     padding: 4px;
 }
 
+/* Analyzer */
+.ana-input-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-end;
+    margin-top: 1.5rem;
+}
+
+.ana-input-group label {
+    display: block;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+}
+
+.ana-balls-inputs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ana-balls-inputs input {
+    width: 60px;
+    height: 50px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    color: var(--text);
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.ana-balls-inputs input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+.ana-balls-inputs input.chance-input {
+    border-color: var(--chance);
+}
+
+.ana-balls-inputs input.chance-input:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
+.ana-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    height: 50px;
+}
+
+.ana-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.ana-combo-display .suggestion-numbers .ball {
+    width: 56px;
+    height: 56px;
+    font-size: 1.3rem;
+}
+
+/* Remove spinners from number inputs */
+.ana-balls-inputs input::-webkit-outer-spin-button,
+.ana-balls-inputs input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.ana-balls-inputs input[type=number] {
+    -moz-appearance: textfield;
+}
+
+@media (max-width: 768px) {
+    .ana-input-row { flex-direction: column; align-items: stretch; }
+    .ana-balls-inputs { justify-content: center; }
+    .ana-btn { width: 100%; }
+}
+
 /* Footer */
 footer {
     text-align: center;
