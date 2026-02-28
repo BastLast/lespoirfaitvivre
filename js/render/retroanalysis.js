@@ -5,15 +5,16 @@ export function runRetroAnalysis() {
     setRetroDone(true);
 
     const MIN_DRAWS = 30;
-    const strategies = ['cold', 'frozen', 'combo', 'mix'];
+    const strategies = ['cold', 'frozen', 'combo', 'mix', 'fixed'];
     const stratLabels = {
         cold: '❄️ Froids (retards)',
         frozen: '🧊 Glacés (fréquence)',
         combo: '🎯 Score combiné',
-        mix: '🎲 Mix équilibré'
+        mix: '🎲 Mix équilibré',
+        fixed: '🔢 1-2-3-4-5-6'
     };
 
-    const results = { cold: [], frozen: [], combo: [], mix: [] };
+    const results = { cold: [], frozen: [], combo: [], mix: [], fixed: [] };
 
     // Incremental tracking
     const freq = {};
@@ -96,11 +97,16 @@ export function runRetroAnalysis() {
             const actualSet = new Set(actual.balls);
             const countM = (arr) => arr.filter(x => actualSet.has(x)).length;
 
+            // FIXED: always 1,2,3,4,5 + chance 6
+            const fixedNums = [1, 2, 3, 4, 5];
+            const fixedCh = 6;
+
             for (const [key, nums, ch] of [
                 ['cold', coldNums, coldCh],
                 ['frozen', frozenNums, frozenCh],
                 ['combo', comboNums, comboCh],
-                ['mix', mixNums, mixCh]
+                ['mix', mixNums, mixCh],
+                ['fixed', fixedNums, fixedCh]
             ]) {
                 results[key].push({
                     drawIndex: i,
@@ -166,7 +172,7 @@ export function runRetroAnalysis() {
             datasets: [{
                 label: 'Moy. boules correctes',
                 data: avgData,
-                backgroundColor: ['#3b82f6', '#06b6d4', '#f59e0b', '#8b5cf6'],
+                backgroundColor: ['#3b82f6', '#06b6d4', '#f59e0b', '#8b5cf6', '#ec4899'],
                 borderRadius: 6
             }]
         },
@@ -218,7 +224,7 @@ export function runRetroAnalysis() {
             datasets: [{
                 label: 'Taux de match Chance (%)',
                 data: chanceData,
-                backgroundColor: ['#3b82f6', '#06b6d4', '#f59e0b', '#8b5cf6'],
+                backgroundColor: ['#3b82f6', '#06b6d4', '#f59e0b', '#8b5cf6', '#ec4899'],
                 borderRadius: 6
             }]
         },
@@ -297,7 +303,7 @@ export function runRetroAnalysis() {
     // Evolution chart (moving average over 50 draws)
     const WINDOW = 50;
     const evoDatasets = [];
-    const evoColors = ['#3b82f6', '#06b6d4', '#f59e0b', '#8b5cf6'];
+    const evoColors = ['#3b82f6', '#06b6d4', '#f59e0b', '#8b5cf6', '#ec4899'];
     const evoLabels = [];
 
     for (let j = WINDOW - 1; j < totalAnalyzed; j++) {
