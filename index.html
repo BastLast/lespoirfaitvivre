@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques Loto FDJ - Depuis Nov. 2019</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --card: #1a1d29;
+            --border: #2a2d3a;
+            --text: #e4e4e7;
+            --muted: #9ca3af;
+            --accent: #3b82f6;
+            --accent2: #8b5cf6;
+            --red: #ef4444;
+            --green: #22c55e;
+            --yellow: #eab308;
+            --orange: #f97316;
+            --chance: #fbbf24;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a5f, #2d1b69);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--muted);
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-card .label {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        nav.tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        nav.tabs button {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        nav.tabs button:hover { color: var(--text); background: var(--card); }
+        nav.tabs button.active {
+            color: var(--accent);
+            background: var(--card);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .chart-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container h3 {
+            margin-bottom: 1rem;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+
+        .chart-container canvas {
+            max-height: 450px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .number-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 1rem;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .number-cell:hover { transform: scale(1.15); }
+
+        .number-cell .count {
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.8);
+            margin-top: 1px;
+        }
+
+        .pairs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .pairs-table th, .pairs-table td {
+            padding: 0.6rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pairs-table th {
+            color: var(--muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .pairs-table tr:hover { background: rgba(59, 130, 246, 0.1); }
+
+        .bar-inline {
+            height: 8px;
+            border-radius: 4px;
+            background: var(--accent);
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .filter-bar label {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .filter-bar select, .filter-bar input {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-right: 1rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .legend-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+        }
+
+        .retard-highlight {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+
+        .suggestion-box {
+            background: linear-gradient(135deg, #1e3a5f, #2d1b69);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .suggestion-box h4 {
+            color: var(--chance);
+            margin-bottom: 0.5rem;
+        }
+
+        .suggestion-numbers {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .suggestion-numbers .ball {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: white;
+        }
+
+        .suggestion-numbers .ball.chance-ball {
+            background: linear-gradient(135deg, var(--chance), var(--orange));
+            color: #000;
+        }
+
+        .info-text {
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        .heatmap-container {
+            overflow-x: auto;
+        }
+
+        .heatmap-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .heatmap-table td {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            font-size: 0.7rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .heatmap-table th {
+            font-size: 0.7rem;
+            color: var(--muted);
+            padding: 4px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        .last-draw {
+            background: linear-gradient(135deg, #0c1829 0%, #1a1145 100%);
+            border: 1px solid var(--accent);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .last-draw h2 {
+            font-size: 1.1rem;
+            color: var(--muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .last-draw .draw-date {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.2rem;
+        }
+
+        .last-draw .draw-balls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .last-draw .draw-balls .big-ball {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: white;
+            background: linear-gradient(145deg, #2563eb, #1d4ed8);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        .last-draw .draw-balls .big-ball.chance {
+            background: linear-gradient(145deg, #f59e0b, #d97706);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .last-draw .draw-balls .separator {
+            font-size: 1.5rem;
+            color: var(--muted);
+            font-weight: 300;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📊 Statistiques Loto FDJ</h1>
+        <p>Analyse complète de <span id="totalDraws">-</span> tirages — Du <span id="dateRange">-</span></p>
+        <p style="font-size:0.75rem; color:var(--muted)">Données officielles FDJ • Depuis le changement de règles de nov. 2019 (5 boules parmi 49 + 1 N° Chance parmi 10)</p>
+        <p id="updateStatus" style="font-size:0.75rem; color:var(--chance); margin-top:0.3rem;">Chargement...</p>
+    </header>
+
+    <div class="container">
+        <!-- Last Draw -->
+        <div class="last-draw" id="lastDrawSection" style="display:none">
+            <h2>🎱 Dernier tirage</h2>
+            <div class="draw-date" id="lastDrawDate">-</div>
+            <div class="draw-balls" id="lastDrawBalls"></div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="stats-summary">
+            <div class="stat-card">
+                <div class="value" id="statTotal">-</div>
+                <div class="label">Tirages analysés</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="statMostCommon">-</div>
+                <div class="label">Boule la + fréquente</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="statLeastCommon">-</div>
+                <div class="label">Boule la - fréquente</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="statMaxRetard">-</div>
+                <div class="label">Plus grand retard actuel</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="statChance">-</div>
+                <div class="label">N° Chance le + fréquent</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <nav class="tabs" id="mainTabs">
+            <button class="active" data-tab="freq">Fréquences</button>
+            <button data-tab="retard">Retards</button>
+            <button data-tab="chance">N° Chance</button>
+            <button data-tab="pairs">Paires & Triplets</button>
+            <button data-tab="heatmap">Heatmap Paires</button>
+            <button data-tab="evolution">Évolution</button>
+            <button data-tab="repartition">Répartition</button>
+            <button data-tab="suggestions">Suggestions</button>
+        </nav>
+
+        <!-- TAB: Fréquences -->
+        <div class="tab-content active" id="tab-freq">
+            <div class="filter-bar">
+                <label>Période :</label>
+                <select id="filterPeriod">
+                    <option value="all">Tous les tirages</option>
+                    <option value="365">12 derniers mois</option>
+                    <option value="180">6 derniers mois</option>
+                    <option value="90">3 derniers mois</option>
+                    <option value="50">50 derniers tirages</option>
+                    <option value="100">100 derniers tirages</option>
+                </select>
+                <label>Tri :</label>
+                <select id="filterSort">
+                    <option value="num">Par numéro</option>
+                    <option value="asc">Moins fréquent → Plus fréquent</option>
+                    <option value="desc">Plus fréquent → Moins fréquent</option>
+                </select>
+            </div>
+            <div class="chart-container">
+                <h3>Fréquence de sortie de chaque boule (1 à 49)</h3>
+                <canvas id="chartFreq"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Boules classées de la moins à la plus tirée</h3>
+                <div id="numberGrid" class="number-grid"></div>
+                <div style="margin-top:1rem">
+                    <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Très rare</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span> Rare</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#eab308"></span> Normal</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> Fréquent</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Très fréquent</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Retards -->
+        <div class="tab-content" id="tab-retard">
+            <div class="chart-container">
+                <h3>🔴 Retard actuel — Nombre de tirages depuis la dernière sortie</h3>
+                <p class="info-text">Plus le retard est grand, plus le numéro n'est pas sorti depuis longtemps.</p>
+                <canvas id="chartRetard"></canvas>
+            </div>
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3>Top 15 — Plus grands retards actuels</h3>
+                    <canvas id="chartTopRetard"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Retard maximum historique par boule</h3>
+                    <canvas id="chartMaxRetard"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Chance -->
+        <div class="tab-content" id="tab-chance">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3>Fréquence des numéros Chance (1-10)</h3>
+                    <canvas id="chartChance"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Répartition N° Chance (camembert)</h3>
+                    <canvas id="chartChancePie"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Retard actuel des numéros Chance</h3>
+                <canvas id="chartChanceRetard"></canvas>
+            </div>
+        </div>
+
+        <!-- TAB: Paires & Triplets -->
+        <div class="tab-content" id="tab-pairs">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3>🔻 15 Paires les MOINS fréquentes (intéressant à jouer ensemble)</h3>
+                    <canvas id="chartLeastPairs"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>15 Paires les plus fréquentes</h3>
+                    <canvas id="chartTopPairs"></canvas>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3>🔻 15 Triplets les MOINS fréquents</h3>
+                    <canvas id="chartLeastTriplets"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>15 Triplets les plus fréquents</h3>
+                    <canvas id="chartTopTriplets"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Heatmap -->
+        <div class="tab-content" id="tab-heatmap">
+            <div class="chart-container">
+                <h3>Heatmap des paires — Combien de fois chaque paire est sortie ensemble</h3>
+                <p class="info-text">Croisez ligne et colonne pour voir le nombre de fois que deux boules sont sorties ensemble. Les cases les plus foncées indiquent les paires les plus rares.</p>
+                <div class="heatmap-container" id="heatmapDiv"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Évolution -->
+        <div class="tab-content" id="tab-evolution">
+            <div class="filter-bar">
+                <label>Numéro à suivre :</label>
+                <select id="evoNumber"></select>
+            </div>
+            <div class="chart-container">
+                <h3>Évolution de la fréquence cumulée</h3>
+                <canvas id="chartEvolution"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Écart entre les sorties (nombre de tirages entre chaque apparition)</h3>
+                <canvas id="chartGaps"></canvas>
+            </div>
+        </div>
+
+        <!-- TAB: Répartition -->
+        <div class="tab-content" id="tab-repartition">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3>Répartition par dizaine</h3>
+                    <canvas id="chartDecades"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Pair vs Impair dans les tirages</h3>
+                    <canvas id="chartParite"></canvas>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3>Somme des 5 boules — Distribution</h3>
+                    <canvas id="chartSomme"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Écart (max - min) des 5 boules — Distribution</h3>
+                    <canvas id="chartEcart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Fréquence par jour de tirage</h3>
+                <canvas id="chartJours"></canvas>
+            </div>
+        </div>
+
+        <!-- TAB: Suggestions -->
+        <div class="tab-content" id="tab-suggestions">
+            <div class="chart-container">
+                <h3>💡 Numéros "froids" — Les moins sortis récemment</h3>
+                <p class="info-text">Basé sur les numéros avec le plus grand retard ET la plus faible fréquence. Ce n'est pas une prédiction — le Loto reste un jeu de hasard pur.</p>
+                <div class="suggestion-box" id="coldSuggestion"></div>
+            </div>
+            <div class="chart-container">
+                <h3>🧊 Numéros "glacés" — Statistiquement sous-représentés</h3>
+                <p class="info-text">Numéros qui sont sortis significativement moins que la moyenne attendue.</p>
+                <div class="suggestion-box" id="frozenSuggestion"></div>
+            </div>
+            <div class="chart-container">
+                <h3>🎯 Combinaison basée sur les retards + faible fréquence</h3>
+                <p class="info-text">Une grille composée des 5 numéros les plus en retard et du N° Chance le plus en retard.</p>
+                <div class="suggestion-box" id="comboSuggestion"></div>
+            </div>
+            <div class="chart-container">
+                <h3>🎲 Grilles "Mix équilibré" — 1 froid + 1 chaud + 3 moyens (3 tranches)</h3>
+                <p class="info-text">5 combinaisons composées d'un numéro parmi les moins sortis (❄️ froid), d'un parmi les plus sortis (🔥 chaud), et de 3 numéros pris dans 3 tranches de fréquence : basse-moyenne, moyenne, haute-moyenne.</p>
+                <div class="suggestion-box" id="mixSuggestion"></div>
+            </div>
+            <div class="chart-container">
+                <h3>📊 Analyse écart à la moyenne</h3>
+                <canvas id="chartDeviation"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Données officielles FDJ® — 989 tirages de nov. 2019 à fév. 2026</p>
+        <p>⚠️ Le Loto est un jeu de hasard. Les statistiques passées n'influencent pas les tirages futurs.</p>
+    </footer>
+
+    <script>
+    // ========== DATA & GLOBALS ==========
+    let allDraws = [];
+    let filteredDraws = [];
+    const charts = {};
+
+    const FDJ_ZIP_URL = 'https://www.sto.api.fdj.fr/anonymous/service-draw-info/v3/documentations/1a2b3c4d-9876-4562-b3fc-2c963f66afp6';
+    const CACHE_KEY = 'loto_draws_cache';
+    const CACHE_TS_KEY = 'loto_cache_ts';
+    const CACHE_TTL = 6 * 60 * 60 * 1000; // 6h en ms
+
+    // ========== CSV PARSER ==========
+    function parseCSV(csvText) {
+        const lines = csvText.split('\n').filter(l => l.trim());
+        if (lines.length < 2) return [];
+        const draws = [];
+        // Skip header (first line)
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(';');
+            if (cols.length < 10) continue;
+            try {
+                const id = cols[0].trim();
+                const day = cols[1].trim();
+                const date = cols[2].trim();
+                const balls = [
+                    parseInt(cols[4].trim()),
+                    parseInt(cols[5].trim()),
+                    parseInt(cols[6].trim()),
+                    parseInt(cols[7].trim()),
+                    parseInt(cols[8].trim()),
+                ].sort((a,b) => a-b);
+                const chance = parseInt(cols[9].trim());
+                if (balls.some(isNaN) || isNaN(chance)) continue;
+                draws.push({ id, day, date, balls, chance });
+            } catch(e) { continue; }
+        }
+        draws.sort((a, b) => {
+            const [ad,am,ay] = a.date.split('/');
+            const [bd,bm,by] = b.date.split('/');
+            return `${ay}${am}${ad}`.localeCompare(`${by}${bm}${bd}`);
+        });
+        return draws;
+    }
+
+    // ========== LOAD DATA ==========
+    async function loadData() {
+        showStatus('Chargement des données...');
+
+        // 1) Try cache first
+        const cachedTs = localStorage.getItem(CACHE_TS_KEY);
+        const cached = localStorage.getItem(CACHE_KEY);
+        const cacheValid = cached && cachedTs && (Date.now() - parseInt(cachedTs)) < CACHE_TTL;
+
+        if (cacheValid) {
+            try {
+                allDraws = JSON.parse(cached);
+                filteredDraws = [...allDraws];
+                init();
+                showStatus(`${allDraws.length} tirages (cache). Vérification des mises à jour...`);
+            } catch(e) { /* cache corrupted, continue */ }
+        }
+
+        // 2) Try to load from bundled JSON as fallback
+        if (!allDraws.length) {
+            try {
+                const resp = await fetch('loto_data.json');
+                if (resp.ok) {
+                    allDraws = await resp.json();
+                    filteredDraws = [...allDraws];
+                    init();
+                    showStatus(`${allDraws.length} tirages chargés (fichier local). Mise à jour en cours...`);
+                }
+            } catch(e) { /* no local file, continue */ }
+        }
+
+        // 3) Try to fetch fresh data from FDJ
+        try {
+            showStatus(allDraws.length ? `${allDraws.length} tirages. Vérification FDJ...` : 'Téléchargement depuis FDJ...');
+            const resp = await fetch(FDJ_ZIP_URL);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+            const blob = await resp.blob();
+            const zip = await JSZip.loadAsync(blob);
+
+            // Find CSV file inside ZIP
+            let csvText = null;
+            for (const filename of Object.keys(zip.files)) {
+                if (filename.endsWith('.csv')) {
+                    csvText = await zip.files[filename].async('text');
+                    break;
+                }
+            }
+
+            if (csvText) {
+                const freshDraws = parseCSV(csvText);
+                if (freshDraws.length > 0) {
+                    const oldCount = allDraws.length;
+                    allDraws = freshDraws;
+                    filteredDraws = [...allDraws];
+
+                    // Cache the result
+                    try {
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(allDraws));
+                        localStorage.setItem(CACHE_TS_KEY, Date.now().toString());
+                    } catch(e) { /* localStorage full */ }
+
+                    init();
+                    const diff = allDraws.length - oldCount;
+                    if (diff > 0 && oldCount > 0) {
+                        showStatus(`✅ Mis à jour ! ${allDraws.length} tirages (+${diff} nouveaux)`);
+                    } else {
+                        showStatus(`✅ ${allDraws.length} tirages — Données à jour`);
+                    }
+                }
+            }
+        } catch(e) {
+            console.warn('FDJ fetch failed:', e);
+            if (allDraws.length) {
+                showStatus(`⚠️ ${allDraws.length} tirages (dernière mise à jour locale). La FDJ n'est pas accessible actuellement.`);
+            } else {
+                showStatus('❌ Impossible de charger les données. Rechargez la page.');
+            }
+        }
+    }
+
+    function showStatus(msg) {
+        const el = document.getElementById('updateStatus');
+        if (el) el.textContent = msg;
+    }
+
+    loadData();
+
+    // ========== LAST DRAW DISPLAY ==========
+    function renderLastDraw() {
+        if (!allDraws.length) return;
+        const last = allDraws[allDraws.length - 1];
+        const dayLabel = last.day.charAt(0).toUpperCase() + last.day.slice(1).toLowerCase();
+        document.getElementById('lastDrawDate').textContent = `${dayLabel} ${last.date}`;
+        const ballsHTML = last.balls.map(b => `<div class="big-ball">${b}</div>`).join('')
+            + '<span class="separator">+</span>'
+            + `<div class="big-ball chance">${last.chance}</div>`;
+        document.getElementById('lastDrawBalls').innerHTML = ballsHTML;
+        document.getElementById('lastDrawSection').style.display = '';
+    }
+
+    // ========== INIT ==========
+    function init() {
+        document.getElementById('totalDraws').textContent = allDraws.length;
+        document.getElementById('dateRange').textContent =
+            `${allDraws[0].date} au ${allDraws[allDraws.length-1].date}`;
+        document.getElementById('statTotal').textContent = allDraws.length;
+
+        // Display last draw
+        renderLastDraw();
+
+        // Setup tabs
+        document.querySelectorAll('#mainTabs button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#mainTabs button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Setup evo number selector
+        const evoSel = document.getElementById('evoNumber');
+        for (let i = 1; i <= 49; i++) {
+            const opt = document.createElement('option');
+            opt.value = i; opt.textContent = `Boule ${i}`;
+            evoSel.appendChild(opt);
+        }
+        evoSel.addEventListener('change', () => renderEvolution());
+
+        // Setup filters
+        document.getElementById('filterPeriod').addEventListener('change', () => updateFilter());
+        document.getElementById('filterSort').addEventListener('change', () => renderFrequency());
+
+        updateFilter();
+    }
+
+    function updateFilter() {
+        const period = document.getElementById('filterPeriod').value;
+        if (period === 'all') {
+            filteredDraws = [...allDraws];
+        } else {
+            const n = parseInt(period);
+            if (n <= 100) {
+                // Use last N draws
+                filteredDraws = allDraws.slice(-n);
+            } else {
+                // Use last N days
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - n);
+                filteredDraws = allDraws.filter(d => {
+                    const [dd, mm, yy] = d.date.split('/');
+                    return new Date(yy, mm-1, dd) >= cutoff;
+                });
+            }
+        }
+        renderAll();
+    }
+
+    // ========== COMPUTE STATS ==========
+    function computeFrequencies(draws) {
+        const freq = {};
+        for (let i = 1; i <= 49; i++) freq[i] = 0;
+        draws.forEach(d => d.balls.forEach(b => freq[b]++));
+        return freq;
+    }
+
+    function computeChanceFreq(draws) {
+        const freq = {};
+        for (let i = 1; i <= 10; i++) freq[i] = 0;
+        draws.forEach(d => freq[d.chance]++);
+        return freq;
+    }
+
+    function computeRetards(draws) {
+        const retard = {};
+        for (let i = 1; i <= 49; i++) retard[i] = draws.length; // default: never appeared
+        for (let idx = draws.length - 1; idx >= 0; idx--) {
+            draws[idx].balls.forEach(b => {
+                if (retard[b] === draws.length) {
+                    retard[b] = draws.length - 1 - idx;
+                }
+            });
+        }
+        // Actually compute properly: retard = number of draws since last appearance
+        const ret = {};
+        for (let i = 1; i <= 49; i++) ret[i] = draws.length;
+        for (let idx = draws.length - 1; idx >= 0; idx--) {
+            draws[idx].balls.forEach(b => {
+                const r = draws.length - 1 - idx;
+                if (r < ret[b]) ret[b] = r;
+            });
+        }
+        return ret;
+    }
+
+    function computeChanceRetards(draws) {
+        const ret = {};
+        for (let i = 1; i <= 10; i++) ret[i] = draws.length;
+        for (let idx = draws.length - 1; idx >= 0; idx--) {
+            const r = draws.length - 1 - idx;
+            if (r < ret[draws[idx].chance]) ret[draws[idx].chance] = r;
+        }
+        return ret;
+    }
+
+    function computeMaxRetards(draws) {
+        const maxRet = {};
+        const lastSeen = {};
+        for (let i = 1; i <= 49; i++) { maxRet[i] = 0; lastSeen[i] = -1; }
+        draws.forEach((d, idx) => {
+            d.balls.forEach(b => {
+                if (lastSeen[b] >= 0) {
+                    const gap = idx - lastSeen[b];
+                    if (gap > maxRet[b]) maxRet[b] = gap;
+                }
+                lastSeen[b] = idx;
+            });
+            // Also check current retard at end
+        });
+        // Check final retard
+        for (let i = 1; i <= 49; i++) {
+            const finalRetard = draws.length - 1 - lastSeen[i];
+            if (lastSeen[i] === -1) maxRet[i] = draws.length;
+            else if (finalRetard > maxRet[i]) maxRet[i] = finalRetard;
+        }
+        return maxRet;
+    }
+
+    function computePairs(draws) {
+        const pairs = {};
+        draws.forEach(d => {
+            for (let i = 0; i < d.balls.length; i++) {
+                for (let j = i + 1; j < d.balls.length; j++) {
+                    const key = `${d.balls[i]}-${d.balls[j]}`;
+                    pairs[key] = (pairs[key] || 0) + 1;
+                }
+            }
+        });
+        return pairs;
+    }
+
+    function computeTriplets(draws) {
+        const trips = {};
+        draws.forEach(d => {
+            for (let i = 0; i < d.balls.length; i++) {
+                for (let j = i + 1; j < d.balls.length; j++) {
+                    for (let k = j + 1; k < d.balls.length; k++) {
+                        const key = `${d.balls[i]}-${d.balls[j]}-${d.balls[k]}`;
+                        trips[key] = (trips[key] || 0) + 1;
+                    }
+                }
+            }
+        });
+        return trips;
+    }
+
+    // ========== COLOR HELPERS ==========
+    function freqColor(val, min, max) {
+        const ratio = (val - min) / (max - min || 1);
+        if (ratio < 0.2) return '#ef4444';
+        if (ratio < 0.4) return '#f97316';
+        if (ratio < 0.6) return '#eab308';
+        if (ratio < 0.8) return '#22c55e';
+        return '#3b82f6';
+    }
+
+    function heatColor(val, maxVal) {
+        if (val === 0) return '#1a1d29';
+        const ratio = val / maxVal;
+        const r = Math.round(30 + ratio * 100);
+        const g = Math.round(30 + ratio * 100);
+        const b = Math.round(60 + ratio * 196);
+        return `rgb(${r},${g},${b})`;
+    }
+
+    // ========== CHART HELPERS ==========
+    function makeChart(id, config) {
+        if (charts[id]) charts[id].destroy();
+        charts[id] = new Chart(document.getElementById(id), config);
+        return charts[id];
+    }
+
+    // ========== RENDER ALL ==========
+    function renderAll() {
+        const freq = computeFrequencies(filteredDraws);
+        const retards = computeRetards(filteredDraws);
+
+        // Summary stats
+        const sortedByFreq = Object.entries(freq).sort((a,b) => b[1] - a[1]);
+        const sortedByRetard = Object.entries(retards).sort((a,b) => b[1] - a[1]);
+        const chanceFreq = computeChanceFreq(filteredDraws);
+        const sortedChance = Object.entries(chanceFreq).sort((a,b) => b[1] - a[1]);
+
+        document.getElementById('statMostCommon').textContent = `N°${sortedByFreq[0][0]} (${sortedByFreq[0][1]}×)`;
+        document.getElementById('statLeastCommon').textContent = `N°${sortedByFreq[sortedByFreq.length-1][0]} (${sortedByFreq[sortedByFreq.length-1][1]}×)`;
+        document.getElementById('statMaxRetard').textContent = `N°${sortedByRetard[0][0]} (${sortedByRetard[0][1]} tirages)`;
+        document.getElementById('statChance').textContent = `N°${sortedChance[0][0]} (${sortedChance[0][1]}×)`;
+
+        renderFrequency();
+        renderRetards();
+        renderChance();
+        renderPairs();
+        renderHeatmap();
+        renderEvolution();
+        renderRepartition();
+        renderSuggestions();
+    }
+
+    // ========== RENDER: FREQUENCY ==========
+    function renderFrequency() {
+        const freq = computeFrequencies(filteredDraws);
+        const sortType = document.getElementById('filterSort').value;
+
+        let labels, values;
+        if (sortType === 'num') {
+            labels = Array.from({length:49}, (_,i) => i+1);
+            values = labels.map(l => freq[l]);
+        } else if (sortType === 'asc') {
+            const sorted = Object.entries(freq).sort((a,b) => a[1] - b[1]);
+            labels = sorted.map(s => s[0]);
+            values = sorted.map(s => s[1]);
+        } else {
+            const sorted = Object.entries(freq).sort((a,b) => b[1] - a[1]);
+            labels = sorted.map(s => s[0]);
+            values = sorted.map(s => s[1]);
+        }
+
+        const minV = Math.min(...values);
+        const maxV = Math.max(...values);
+        const avg = values.reduce((a,b)=>a+b,0) / values.length;
+
+        makeChart('chartFreq', {
+            type: 'bar',
+            data: {
+                labels: labels.map(l => `N°${l}`),
+                datasets: [{
+                    label: 'Nombre de sorties',
+                    data: values,
+                    backgroundColor: values.map(v => freqColor(v, minV, maxV)),
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: (ctx) => {
+                                const pct = ((ctx.parsed.y / filteredDraws.length) * 100).toFixed(1);
+                                return `${pct}% des tirages\nMoyenne: ${avg.toFixed(1)}`;
+                            }
+                        }
+                    },
+                    annotation: undefined
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af', maxRotation: 90, font: { size: 10 } }
+                    }
+                }
+            }
+        });
+
+        // Number grid
+        const grid = document.getElementById('numberGrid');
+        grid.innerHTML = '';
+        const sorted = Object.entries(freq).sort((a,b) => a[1] - b[1]);
+        sorted.forEach(([num, count]) => {
+            const cell = document.createElement('div');
+            cell.className = 'number-cell';
+            cell.style.background = freqColor(count, minV, maxV);
+            cell.style.color = 'white';
+            cell.innerHTML = `${num}<span class="count">${count}×</span>`;
+            cell.title = `Boule ${num}: ${count} sorties (${((count/filteredDraws.length)*100).toFixed(1)}%)`;
+            grid.appendChild(cell);
+        });
+    }
+
+    // ========== RENDER: RETARDS ==========
+    function renderRetards() {
+        const retards = computeRetards(filteredDraws);
+        const maxRetards = computeMaxRetards(filteredDraws);
+
+        const labels = Array.from({length:49}, (_,i) => `N°${i+1}`);
+        const values = Array.from({length:49}, (_,i) => retards[i+1]);
+        const maxV = Math.max(...values);
+
+        makeChart('chartRetard', {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Retard actuel',
+                    data: values,
+                    backgroundColor: values.map(v => {
+                        const ratio = v / maxV;
+                        if (ratio > 0.8) return '#ef4444';
+                        if (ratio > 0.6) return '#f97316';
+                        if (ratio > 0.4) return '#eab308';
+                        return '#22c55e';
+                    }),
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af', maxRotation: 90, font: { size: 10 } } }
+                }
+            }
+        });
+
+        // Top 15 retards
+        const top15 = Object.entries(retards).sort((a,b) => b[1]-a[1]).slice(0, 15);
+        makeChart('chartTopRetard', {
+            type: 'bar',
+            data: {
+                labels: top15.map(t => `N°${t[0]}`),
+                datasets: [{
+                    label: 'Retard',
+                    data: top15.map(t => t[1]),
+                    backgroundColor: '#ef4444',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    y: { grid: { display: false }, ticks: { color: '#e4e4e7' } }
+                }
+            }
+        });
+
+        // Max retards historiques
+        const maxLabels = Array.from({length:49}, (_,i) => `N°${i+1}`);
+        const maxValues = Array.from({length:49}, (_,i) => maxRetards[i+1]);
+        makeChart('chartMaxRetard', {
+            type: 'bar',
+            data: {
+                labels: maxLabels,
+                datasets: [{
+                    label: 'Retard max historique',
+                    data: maxValues,
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af', maxRotation: 90, font: { size: 9 } } }
+                }
+            }
+        });
+    }
+
+    // ========== RENDER: CHANCE ==========
+    function renderChance() {
+        const chanceFreq = computeChanceFreq(filteredDraws);
+        const chanceRetards = computeChanceRetards(filteredDraws);
+
+        const labels = Array.from({length:10}, (_,i) => `N°${i+1}`);
+        const values = Array.from({length:10}, (_,i) => chanceFreq[i+1]);
+        const colors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#6366f1'];
+
+        makeChart('chartChance', {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Sorties',
+                    data: values,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        makeChart('chartChancePie', {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderColor: '#1a1d29',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#9ca3af' } },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.label}: ${ctx.parsed} (${((ctx.parsed/filteredDraws.length)*100).toFixed(1)}%)`
+                        }
+                    }
+                }
+            }
+        });
+
+        const retLabels = Array.from({length:10}, (_,i) => `N°${i+1}`);
+        const retValues = Array.from({length:10}, (_,i) => chanceRetards[i+1]);
+        makeChart('chartChanceRetard', {
+            type: 'bar',
+            data: {
+                labels: retLabels,
+                datasets: [{
+                    label: 'Retard actuel',
+                    data: retValues,
+                    backgroundColor: retValues.map(v => v > 15 ? '#ef4444' : v > 10 ? '#f97316' : '#22c55e'),
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+    }
+
+    // ========== RENDER: PAIRS ==========
+    function renderPairs() {
+        const pairs = computePairs(filteredDraws);
+        const triplets = computeTriplets(filteredDraws);
+
+        // Top 15 pairs (most)
+        const topPairs = Object.entries(pairs).sort((a,b) => b[1]-a[1]).slice(0, 15);
+        makeChart('chartTopPairs', {
+            type: 'bar',
+            data: {
+                labels: topPairs.map(p => p[0]),
+                datasets: [{
+                    label: 'Sorties ensemble',
+                    data: topPairs.map(p => p[1]),
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    y: { grid: { display: false }, ticks: { color: '#e4e4e7', font: { size: 11 } } }
+                }
+            }
+        });
+
+        // Top 15 least frequent pairs (that appeared at least once)
+        const leastPairs = Object.entries(pairs).sort((a,b) => a[1]-b[1]).slice(0, 15);
+        makeChart('chartLeastPairs', {
+            type: 'bar',
+            data: {
+                labels: leastPairs.map(p => p[0]),
+                datasets: [{
+                    label: 'Sorties ensemble',
+                    data: leastPairs.map(p => p[1]),
+                    backgroundColor: '#ef4444',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    y: { grid: { display: false }, ticks: { color: '#e4e4e7', font: { size: 11 } } }
+                }
+            }
+        });
+
+        // Triplets
+        const topTrips = Object.entries(triplets).sort((a,b) => b[1]-a[1]).slice(0, 15);
+        makeChart('chartTopTriplets', {
+            type: 'bar',
+            data: {
+                labels: topTrips.map(p => p[0]),
+                datasets: [{
+                    label: 'Sorties ensemble',
+                    data: topTrips.map(p => p[1]),
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    y: { grid: { display: false }, ticks: { color: '#e4e4e7', font: { size: 10 } } }
+                }
+            }
+        });
+
+        const leastTrips = Object.entries(triplets).sort((a,b) => a[1]-b[1]).slice(0, 15);
+        makeChart('chartLeastTriplets', {
+            type: 'bar',
+            data: {
+                labels: leastTrips.map(p => p[0]),
+                datasets: [{
+                    label: 'Sorties ensemble',
+                    data: leastTrips.map(p => p[1]),
+                    backgroundColor: '#ef4444',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    y: { grid: { display: false }, ticks: { color: '#e4e4e7', font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // ========== RENDER: HEATMAP ==========
+    function renderHeatmap() {
+        const pairs = computePairs(filteredDraws);
+        const maxPairVal = Math.max(...Object.values(pairs));
+
+        let html = '<table class="heatmap-table"><tr><th></th>';
+        for (let i = 1; i <= 49; i++) html += `<th>${i}</th>`;
+        html += '</tr>';
+
+        for (let i = 1; i <= 49; i++) {
+            html += `<tr><th>${i}</th>`;
+            for (let j = 1; j <= 49; j++) {
+                if (i === j) {
+                    html += '<td style="background:#2a2d3a">—</td>';
+                } else {
+                    const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                    const val = pairs[key] || 0;
+                    html += `<td style="background:${heatColor(val, maxPairVal)};color:${val > maxPairVal*0.5 ? '#fff' : '#666'}" title="Paire ${key}: ${val}×">${val}</td>`;
+                }
+            }
+            html += '</tr>';
+        }
+        html += '</table>';
+        document.getElementById('heatmapDiv').innerHTML = html;
+    }
+
+    // ========== RENDER: EVOLUTION ==========
+    function renderEvolution() {
+        const num = parseInt(document.getElementById('evoNumber').value) || 1;
+
+        // Cumulative frequency
+        const cumFreq = [];
+        let count = 0;
+        const gaps = [];
+        let lastIdx = -1;
+
+        filteredDraws.forEach((d, idx) => {
+            if (d.balls.includes(num)) {
+                count++;
+                if (lastIdx >= 0) gaps.push(idx - lastIdx);
+                lastIdx = idx;
+            }
+            cumFreq.push(count);
+        });
+
+        const expectedLine = filteredDraws.map((_, idx) => (idx + 1) * 5 / 49);
+
+        makeChart('chartEvolution', {
+            type: 'line',
+            data: {
+                labels: filteredDraws.map(d => d.date),
+                datasets: [
+                    {
+                        label: `Fréquence cumulée N°${num}`,
+                        data: cumFreq,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.1)',
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 0,
+                    },
+                    {
+                        label: 'Fréquence attendue (théorique)',
+                        data: expectedLine,
+                        borderColor: '#ef4444',
+                        borderDash: [5,5],
+                        fill: false,
+                        pointRadius: 0,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#9ca3af' } }
+                },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af', maxTicksLimit: 20, maxRotation: 45 }
+                    }
+                }
+            }
+        });
+
+        // Gaps
+        makeChart('chartGaps', {
+            type: 'bar',
+            data: {
+                labels: gaps.map((_, i) => `Écart ${i+1}`),
+                datasets: [{
+                    label: `Tirages entre 2 sorties du N°${num}`,
+                    data: gaps,
+                    backgroundColor: gaps.map(g => g > 20 ? '#ef4444' : g > 10 ? '#f97316' : '#22c55e'),
+                    borderRadius: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { display: false } }
+                }
+            }
+        });
+    }
+
+    // ========== RENDER: REPARTITION ==========
+    function renderRepartition() {
+        // By decade
+        const decades = { '1-9': 0, '10-19': 0, '20-29': 0, '30-39': 0, '40-49': 0 };
+        filteredDraws.forEach(d => {
+            d.balls.forEach(b => {
+                if (b <= 9) decades['1-9']++;
+                else if (b <= 19) decades['10-19']++;
+                else if (b <= 29) decades['20-29']++;
+                else if (b <= 39) decades['30-39']++;
+                else decades['40-49']++;
+            });
+        });
+
+        makeChart('chartDecades', {
+            type: 'bar',
+            data: {
+                labels: Object.keys(decades),
+                datasets: [{
+                    label: 'Sorties',
+                    data: Object.values(decades),
+                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'],
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Parity
+        const parityDist = {};
+        filteredDraws.forEach(d => {
+            const odd = d.balls.filter(b => b % 2 !== 0).length;
+            const key = `${odd} impairs / ${5-odd} pairs`;
+            parityDist[key] = (parityDist[key] || 0) + 1;
+        });
+        const parityLabels = Object.keys(parityDist).sort();
+        makeChart('chartParite', {
+            type: 'bar',
+            data: {
+                labels: parityLabels,
+                datasets: [{
+                    label: 'Nombre de tirages',
+                    data: parityLabels.map(l => parityDist[l]),
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Sum distribution
+        const sums = {};
+        filteredDraws.forEach(d => {
+            const s = d.balls.reduce((a,b) => a+b, 0);
+            const bucket = Math.floor(s / 10) * 10;
+            const key = `${bucket}-${bucket+9}`;
+            sums[key] = (sums[key] || 0) + 1;
+        });
+        const sumLabels = Object.keys(sums).sort((a,b) => parseInt(a) - parseInt(b));
+        makeChart('chartSomme', {
+            type: 'bar',
+            data: {
+                labels: sumLabels,
+                datasets: [{
+                    label: 'Nombre de tirages',
+                    data: sumLabels.map(l => sums[l]),
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Spread (max - min)
+        const spreads = {};
+        filteredDraws.forEach(d => {
+            const spread = d.balls[d.balls.length-1] - d.balls[0];
+            const bucket = Math.floor(spread / 5) * 5;
+            const key = `${bucket}-${bucket+4}`;
+            spreads[key] = (spreads[key] || 0) + 1;
+        });
+        const spreadLabels = Object.keys(spreads).sort((a,b) => parseInt(a) - parseInt(b));
+        makeChart('chartEcart', {
+            type: 'bar',
+            data: {
+                labels: spreadLabels,
+                datasets: [{
+                    label: 'Nombre de tirages',
+                    data: spreadLabels.map(l => spreads[l]),
+                    backgroundColor: '#f97316',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // By day of week
+        const days = {};
+        filteredDraws.forEach(d => {
+            days[d.day] = (days[d.day] || 0) + 1;
+        });
+        makeChart('chartJours', {
+            type: 'bar',
+            data: {
+                labels: Object.keys(days),
+                datasets: [{
+                    label: 'Nombre de tirages',
+                    data: Object.values(days),
+                    backgroundColor: ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6', '#f97316', '#ec4899'],
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+    }
+
+    // ========== RENDER: SUGGESTIONS ==========
+    function renderSuggestions() {
+        const freq = computeFrequencies(filteredDraws);
+        const retards = computeRetards(filteredDraws);
+        const chanceRetards = computeChanceRetards(filteredDraws);
+        const chanceFreq = computeChanceFreq(filteredDraws);
+        const avgFreq = filteredDraws.length * 5 / 49;
+
+        // Cold numbers: highest retard
+        const sortedRetard = Object.entries(retards).sort((a,b) => b[1]-a[1]);
+        const coldNumbers = sortedRetard.slice(0, 5).map(e => parseInt(e[0]));
+        const coldChance = Object.entries(chanceRetards).sort((a,b) => b[1]-a[1])[0];
+
+        document.getElementById('coldSuggestion').innerHTML = `
+            <h4>Les 5 boules avec le plus grand retard + N° Chance le plus en retard</h4>
+            <div class="suggestion-numbers">
+                ${coldNumbers.sort((a,b)=>a-b).map(n => `<div class="ball">${n}</div>`).join('')}
+                <div class="ball chance-ball">${coldChance[0]}</div>
+            </div>
+            <p class="info-text">Retards: ${sortedRetard.slice(0,5).map(e => `N°${e[0]}=${e[1]} tirages`).join(', ')} | Chance N°${coldChance[0]}=${coldChance[1]} tirages</p>
+        `;
+
+        // Frozen: lowest frequency
+        const sortedFreq = Object.entries(freq).sort((a,b) => a[1]-b[1]);
+        const frozenNumbers = sortedFreq.slice(0, 5).map(e => parseInt(e[0]));
+        const frozenChance = Object.entries(chanceFreq).sort((a,b) => a[1]-b[1])[0];
+
+        document.getElementById('frozenSuggestion').innerHTML = `
+            <h4>Les 5 boules les moins souvent tirées + N° Chance le moins tiré</h4>
+            <div class="suggestion-numbers">
+                ${frozenNumbers.sort((a,b)=>a-b).map(n => `<div class="ball">${n}</div>`).join('')}
+                <div class="ball chance-ball">${frozenChance[0]}</div>
+            </div>
+            <p class="info-text">Fréquences: ${sortedFreq.slice(0,5).map(e => `N°${e[0]}=${e[1]}× (moy: ${avgFreq.toFixed(1)})`).join(', ')} | Chance N°${frozenChance[0]}=${frozenChance[1]}×</p>
+        `;
+
+        // Combo: weighted score (retard * 2 + deficit from average)
+        const scores = {};
+        for (let i = 1; i <= 49; i++) {
+            const deficit = avgFreq - freq[i];
+            scores[i] = retards[i] * 2 + Math.max(0, deficit * 3);
+        }
+        const bestCombo = Object.entries(scores).sort((a,b) => b[1]-a[1]).slice(0, 5).map(e => parseInt(e[0]));
+        const bestChance = Object.entries(chanceRetards).sort((a,b) => {
+            const cDef = (filteredDraws.length / 10) - chanceFreq[a[0]];
+            const dDef = (filteredDraws.length / 10) - chanceFreq[b[0]];
+            return (b[1]*2 + Math.max(0,dDef*3)) - (a[1]*2 + Math.max(0,cDef*3));
+        })[0];
+
+        document.getElementById('comboSuggestion').innerHTML = `
+            <h4>Grille "Score combiné" (retard × 2 + déficit de fréquence × 3)</h4>
+            <div class="suggestion-numbers">
+                ${bestCombo.sort((a,b)=>a-b).map(n => `<div class="ball">${n}</div>`).join('')}
+                <div class="ball chance-ball">${bestChance[0]}</div>
+            </div>
+            <p class="info-text">Score = retard_actuel × 2 + max(0, (moyenne - fréquence) × 3). Plus le score est élevé, plus le numéro est "en retard" statistiquement.</p>
+        `;
+
+        // Mix suggestions: 5 grids with 1 cold + 1 hot + 3 from 3 frequency tiers
+        const sortedByFreqAll = Object.entries(freq).sort((a,b) => a[1] - b[1]);
+        const totalNums = sortedByFreqAll.length; // 49
+
+        // Split into 5 zones: cold (bottom 20%), low-avg, mid-avg, high-avg, hot (top 20%)
+        const coldPool = sortedByFreqAll.slice(0, Math.ceil(totalNums * 0.2)).map(([n]) => parseInt(n));
+        const hotPool = sortedByFreqAll.slice(-Math.ceil(totalNums * 0.2)).map(([n]) => parseInt(n));
+
+        // Middle 60% split into 3 tiers of ~20% each
+        const middleAll = sortedByFreqAll.slice(Math.ceil(totalNums * 0.2), -Math.ceil(totalNums * 0.2));
+        const tierSize = Math.ceil(middleAll.length / 3);
+        const tierLow = middleAll.slice(0, tierSize).map(([n]) => parseInt(n));       // basse-moyenne
+        const tierMid = middleAll.slice(tierSize, tierSize * 2).map(([n]) => parseInt(n)); // moyenne
+        const tierHigh = middleAll.slice(tierSize * 2).map(([n]) => parseInt(n));      // haute-moyenne
+
+        // Chance: sorted by distance to average
+        const avgChanceFreq = filteredDraws.length / 10;
+        const chanceSortedMix = Object.entries(chanceFreq)
+            .map(([n, c]) => ({ num: parseInt(n), diff: Math.abs(c - avgChanceFreq) }))
+            .sort((a,b) => a.diff - b.diff);
+
+        // Shuffle helper (Fisher-Yates)
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        // Generate 5 unique grids
+        const usedGrids = new Set();
+        const mixGrids = [];
+        let attempts = 0;
+        while (mixGrids.length < 5 && attempts < 200) {
+            attempts++;
+            const cold = shuffle(coldPool)[0];
+            const hot = shuffle(hotPool)[0];
+            const low = shuffle(tierLow)[0];
+            const mid = shuffle(tierMid)[0];
+            const high = shuffle(tierHigh)[0];
+            const nums = [cold, low, mid, high, hot].sort((a,b) => a - b);
+            const key = nums.join('-');
+            if (usedGrids.has(key)) continue;
+            // Ensure all 5 are different numbers
+            if (new Set(nums).size !== 5) continue;
+            usedGrids.add(key);
+            const chIdx = mixGrids.length % chanceSortedMix.length;
+            mixGrids.push({
+                nums,
+                cold, hot, low, mid, high,
+                chance: chanceSortedMix[chIdx].num
+            });
+        }
+
+        let mixHTML = '';
+        mixGrids.forEach((grid, idx) => {
+            mixHTML += `
+            <h4>Grille ${idx + 1}</h4>
+            <div class="suggestion-numbers">
+                ${grid.nums.map(n => {
+                    let bg, label, title;
+                    if (n === grid.cold) {
+                        bg = 'linear-gradient(135deg, #3b82f6, #1d4ed8)'; label = '❄️'; title = `Froid (${freq[n]}×)`;
+                    } else if (n === grid.hot) {
+                        bg = 'linear-gradient(135deg, #ef4444, #dc2626)'; label = '🔥'; title = `Chaud (${freq[n]}×)`;
+                    } else if (n === grid.low) {
+                        bg = 'linear-gradient(135deg, #6366f1, #4f46e5)'; label = ''; title = `Basse-moy (${freq[n]}×)`;
+                    } else if (n === grid.mid) {
+                        bg = 'linear-gradient(135deg, var(--accent), var(--accent2))'; label = ''; title = `Moyenne (${freq[n]}×)`;
+                    } else {
+                        bg = 'linear-gradient(135deg, #f59e0b, #d97706)'; label = ''; title = `Haute-moy (${freq[n]}×)`;
+                    }
+                    return `<div class="ball" style="background:${bg}" title="${title}">${label}${n}</div>`;
+                }).join('')}
+                <div class="ball chance-ball">${grid.chance}</div>
+            </div>
+            <p class="info-text" style="margin-bottom:16px">
+                ❄️ N°${grid.cold}=${freq[grid.cold]}× |
+                <span style="color:#818cf8">▸</span> N°${grid.low}=${freq[grid.low]}× (basse-moy) |
+                <span style="color:#f59e0b">▸</span> N°${grid.mid}=${freq[grid.mid]}× (moy) |
+                <span style="color:#fbbf24">▸</span> N°${grid.high}=${freq[grid.high]}× (haute-moy) |
+                🔥 N°${grid.hot}=${freq[grid.hot]}× |
+                Chance: ${grid.chance}
+            </p>`;
+        });
+
+        mixHTML += `<p class="info-text" style="margin-top:8px">Tranches: froid (&lt;${freq[coldPool[coldPool.length-1]]}×) | basse-moy (${freq[tierLow[0]]}–${freq[tierLow[tierLow.length-1]]}×) | moy (${freq[tierMid[0]]}–${freq[tierMid[tierMid.length-1]]}×) | haute-moy (${freq[tierHigh[0]]}–${freq[tierHigh[tierHigh.length-1]]}×) | chaud (&gt;${freq[hotPool[0]]}×)</p>`;
+
+        document.getElementById('mixSuggestion').innerHTML = mixHTML;
+
+        // Deviation chart
+        const deviations = [];
+        const devLabels = [];
+        for (let i = 1; i <= 49; i++) {
+            devLabels.push(`N°${i}`);
+            deviations.push(freq[i] - avgFreq);
+        }
+
+        makeChart('chartDeviation', {
+            type: 'bar',
+            data: {
+                labels: devLabels,
+                datasets: [{
+                    label: 'Écart à la moyenne',
+                    data: deviations,
+                    backgroundColor: deviations.map(d => d < 0 ? '#ef4444' : '#22c55e'),
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: (ctx) => {
+                                const num = ctx.dataIndex + 1;
+                                return `Sorties: ${freq[num]}\nMoyenne attendue: ${avgFreq.toFixed(1)}\nÉcart: ${deviations[ctx.dataIndex] > 0 ? '+' : ''}${deviations[ctx.dataIndex].toFixed(1)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af' },
+                    },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af', maxRotation: 90, font: { size: 10 } } }
+                }
+            }
+        });
+    }
+    </script>
+</body>
+</html>

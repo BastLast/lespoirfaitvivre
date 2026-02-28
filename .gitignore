@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+loto_historique.zip
+loto_201911.csv
+parse_loto.py
+.DS_Store
