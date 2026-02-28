@@ -137,25 +137,28 @@
 
         <!-- TAB: Paires & Triplets -->
         <div class="tab-content" id="tab-pairs">
+            <div class="chart-container">
+                <h3>📊 Bilan des paires</h3>
+                <div id="pairsStatsInfo"></div>
+            </div>
             <div class="grid-2">
                 <div class="chart-container">
-                    <h3>🔻 15 Paires les MOINS fréquentes (intéressant à jouer ensemble)</h3>
-                    <canvas id="chartLeastPairs"></canvas>
+                    <h3>⏰ 15 Paires les plus en retard</h3>
+                    <p class="info-text">Paires non tirées depuis le plus grand nombre de tirages. Intéressant à jouer ensemble.</p>
+                    <canvas id="chartPairsRetard"></canvas>
                 </div>
                 <div class="chart-container">
                     <h3>15 Paires les plus fréquentes</h3>
                     <canvas id="chartTopPairs"></canvas>
                 </div>
             </div>
-            <div class="grid-2">
-                <div class="chart-container">
-                    <h3>🔻 15 Triplets les MOINS fréquents</h3>
-                    <canvas id="chartLeastTriplets"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h3>15 Triplets les plus fréquents</h3>
-                    <canvas id="chartTopTriplets"></canvas>
-                </div>
+            <div class="chart-container">
+                <h3>📊 Bilan des triplets</h3>
+                <div id="tripletsStatsInfo"></div>
+            </div>
+            <div class="chart-container">
+                <h3>15 Triplets les plus fréquents</h3>
+                <canvas id="chartTopTriplets"></canvas>
             </div>
             <div class="chart-container">
                 <h3>🎰 Regroupements par dizaine — 3 numéros ou plus dans la même dizaine</h3>
