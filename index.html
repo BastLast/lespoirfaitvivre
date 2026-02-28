@@ -160,11 +160,17 @@
             <div class="chart-container">
                 <h3>🎰 Regroupements par dizaine — 3 numéros ou plus dans la même dizaine</h3>
                 <p class="info-text">Analyse la fréquence des tirages où 3 numéros ou plus tombent dans la même tranche de 10 (1-10, 11-20, 21-30, 31-40, 41-49).</p>
-                <div class="grid-2" style="margin-top:1rem">
+                <div id="decadeClusterInfo" style="margin-top:1rem"></div>
+            </div>
+            <div class="grid-2">
+                <div class="chart-container">
+                    <h3>Nombre de tirages avec X numéros dans la même dizaine</h3>
                     <canvas id="chartDecadeClusters"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Dizaine la plus concernée par les regroupements</h3>
                     <canvas id="chartDecadeDetail"></canvas>
                 </div>
-                <div id="decadeClusterInfo" style="margin-top:1rem"></div>
             </div>
         </div>
 

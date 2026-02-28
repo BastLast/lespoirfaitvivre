@@ -146,11 +146,7 @@ export function renderPairs() {
             responsive: true,
             plugins: {
                 legend: { display: false },
-                title: {
-                    display: true,
-                    text: 'Nombre de tirages avec X numéros dans la même dizaine',
-                    color: '#e4e4e7'
-                },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         afterLabel: (ctx) => `${(ctx.raw / totalDraws * 100).toFixed(1)}% des tirages`
@@ -180,11 +176,7 @@ export function renderPairs() {
             responsive: true,
             plugins: {
                 legend: { display: false },
-                title: {
-                    display: true,
-                    text: 'Dizaine la plus concernée par les regroupements',
-                    color: '#e4e4e7'
-                },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         afterLabel: (ctx) => `${(ctx.raw / totalDraws * 100).toFixed(1)}% des tirages`
